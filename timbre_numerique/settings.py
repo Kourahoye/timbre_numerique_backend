@@ -24,9 +24,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "strawberry.django",
     # 'corsheaders',
-    "users",
+    "users.apps.UsersConfig",
     "gqlauth",
-    'timbre'
+    'timbre.apps.TimbreConfig'
 ]
 # CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [

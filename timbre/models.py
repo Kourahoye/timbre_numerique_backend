@@ -15,10 +15,6 @@ class Session(models.Model):
     created_by = models.ForeignKey(User,on_delete=models.CASCADE,related_name="session_created_by")
     updated_by = models.ForeignKey(User,on_delete=models.CASCADE,related_name="session_updated_by")
     
-    # class Meta:
-    #     constraints =[
-    #         CheckConstraint(condition=Q(start_date<end_date))
-    #     ]
         
     def clean(self):
         if self.start_date < self.end_date:
@@ -69,8 +65,53 @@ class Timbre(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
     owned_by = models.ForeignKey(User,on_delete=models.CASCADE,related_name="timbre_owned_by")
+    
+    class Meta:
+        permissions = [
+            # --- USER ---
+            ("buy_stamp", "Can buy stamp"),
+            ("view_own_stamps", "Can view own stamps"),
+            ("download_pdf", "Can download PDF"),
+            ("generate_qr", "Can generate QR"),     
 
+            # --- CONTROLLER ---
+            ("scan_qr", "Can scan QR"),
+            ("verify_stamp", "Can verify stamp"),
+            ("view_scan_history", "Can view scan history"),
+            ("create_stamp", "Can create stamp"),
+            ("sell_stamp", "Can sell stamp"),
+            ("view_sales", "Can view sales"),
 
+            # --- ADMIN ---
+            ("manage_users", "Can manage users"),
+            ("view_all_stamps", "Can view all stamps"),
+        ]
 
     def __str__(self):
         return f"Timbre {self.reference}"
+    
+class Transaction(models.Model):
+    timbre = models.ForeignKey(Timbre,on_delete=models.CASCADE)
+    status = models.CharField(choices=[("pending","pending"),("rejected","rejected"),("accepted","accepted")],default="pending",null=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+    controller = models.ForeignKey(User,on_delete=models.CASCADE,related_name="transaction_initiated_by")
+    updated_by = models.ForeignKey(User,on_delete=models.CASCADE,related_name="transaction_updated_by")
+    
+    class Meta:
+        verbose_name = 'Transaction'
+        verbose_name_plural = 'Transactions'
+
+    def __str__(self):
+        return f"Utilisation du timbre {self.timbre} par {self.controller}"
+    
+class Notification(models.Model):
+    content = models.CharField(max_length=100,null=False)
+    read = models.BooleanField(default=False,null=False)
+    link = models.JSONField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User,on_delete=models.CASCADE,related_name="notifications")
+    
+    def __str__(self):
+        return f"Notification for user {self.user} at {self.created_at}"

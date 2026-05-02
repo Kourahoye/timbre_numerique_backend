@@ -1,6 +1,6 @@
 import strawberry
 import strawberry_django
-from timbre.models import PriceAssignation, Session, Timbre, TypeTimbre
+from timbre.models import Notification, PriceAssignation, Session, Timbre, Transaction, TypeTimbre
 from users.models import User
 
 @strawberry_django.type(User)
@@ -11,6 +11,11 @@ class UserTypeMIN:
 
 
 @strawberry.type
+class AuthPermType:#retrun user permissions
+    id: strawberry.ID
+    name: str
+    
+@strawberry.type
 class Message:
     success: bool
     message: str
@@ -19,7 +24,17 @@ class Message:
 class SessionTyoe:
     id:strawberry.ID
     name:str
-
+@strawberry_django.type(Session)
+class SessionTypeDetail:
+    id:strawberry.ID
+    name:str
+    active:bool
+    start_date:str
+    end_date:str
+    created_at:str
+    updated_at:str
+    created_by:UserTypeMIN
+    updated_by:UserTypeMIN
     
 
 @strawberry_django.type(TypeTimbre)
@@ -42,6 +57,10 @@ class PriceAssignationType:
     session: SessionTyoe
     type:TypeTimbreType
     price:float
+    created_at:str
+    updated_at:str
+    created_by:UserTypeMIN
+    updated_by:UserTypeMIN
     
 @strawberry_django.type(Timbre)
 class TimbreType:
@@ -50,4 +69,25 @@ class TimbreType:
     type:TypeTimbreType
     used:bool
     qrCode:str
-    owned_by:strawberry.auto
+    owned_by:UserTypeMIN
+    
+@strawberry_django.type(Notification)
+class NotificationType:
+    id:strawberry.ID
+    content:str
+    user:UserTypeMIN
+    read:bool
+    link:strawberry.auto
+    created_at:str
+    updated_at:str
+    
+@strawberry_django.type(Transaction)
+class TransactionType:
+    id:strawberry.ID
+    timbre:TimbreType
+    status:str
+    created_at:str
+    updated_at:str
+    controller:UserTypeMIN
+    updated_by:UserTypeMIN
+    
