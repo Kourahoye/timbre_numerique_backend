@@ -8,10 +8,10 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from gqlauth.user import arg_mutations as mutations
 from gqlauth.user.queries import UserQueries
-from timbre.models import PriceAssignation, Session, Timbre, Transaction, TypeTimbre
-from timbre.types import AuthPermType, Message, PriceAssignationType, SessionTyoe, SessionTypeDetail, TimbreType, TransactionType, TypeTimbreDetailsType, TypeTimbreType, UserTypeMIN
+from timbre.models import Notification, PriceAssignation, Session, Timbre, Transaction, TypeTimbre
+from timbre.types import AuthPermType, Message, NotificationType, PriceAssignationType, SessionTyoe, SessionTypeDetail, TimbreType, TransactionType, TransactionTypeDetails, TypeTimbreDetailsType, TypeTimbreType, UserTypeMIN
 from users.models import User
-
+from django.db.models import F
 
 
 # @strawberry.django.type(model=get_user_model())
@@ -32,6 +32,11 @@ class Query(UserQueries):
     perms:list[AuthPermType]
     users:list[UserTypeMIN]
     sessionInfos:list[SessionTypeDetail]
+    get_timbre_price:PriceAssignationType
+    notifications:list[NotificationType]
+    all_notifications:list[NotificationType]
+    new_notis_count:int
+    find_transaction:TransactionTypeDetails
     # current:Message
     
     @strawberry.field(permission_classes=[IsAuthenticated])
@@ -65,7 +70,7 @@ class Query(UserQueries):
         timbreType = TypeTimbre.objects.all()
         return timbreType
     
-    @strawberry.field(permission_classes=[IsAuthenticated])
+    @strawberry.field(permission_classes=[])
     def prices(self,info:strawberry.types.Info):
         prices = PriceAssignation.objects.all().order_by("-created_at")
         return prices
@@ -77,8 +82,10 @@ class Query(UserQueries):
             usr = User.objects.get(username=owner)
             timbre = Timbre.objects.get(reference=ref,owned_by=usr,secret=secret)
             return timbre
-        except (Timbre.DoesNotExist,User.DoesNotExist):
-            raise ValidationError(message="Invalid QR code")
+        except Timbre.DoesNotExist:
+            raise ValidationError(message="Timbre inconnue")
+        except User.DoesNotExist:
+            raise ValidationError(message="User inconnu")         
         except Exception :#excepted for split error
             raise ValidationError(message="Wrong format of qrcode")
         
@@ -90,9 +97,42 @@ class Query(UserQueries):
         return timbres
     
     @strawberry.field(permission_classes=[])
+    def get_timbre_price(self,id:int,info:strawberry.types.Info):
+        session = Session.objects.get(active=True)
+        if not session:
+            raise ValidationError(message="Aucune session en cours")
+        price = PriceAssignation.objects.get(type_id=id,session=session)
+        return price
+    
+    @strawberry.field(permission_classes=[])
     def active_session_price(self,info:strawberry.types.Info) -> list[PriceAssignationType]:
         prices_current = PriceAssignation.objects.filter(session__active=True)
         return prices_current
+    
+    @strawberry.field(permission_classes=[])
+    def notifications(self,info:strawberry.types.Info):
+        user = info.context.request.user
+        notifications = Notification.objects.filter(read=False,user=user)
+        return notifications 
+    
+    @strawberry.field(permission_classes=[])
+    def new_notis_count(self,info:strawberry.types.Info):
+        user = info.context.request.user
+        notifications = Notification.objects.filter(read=False,user=user).count()
+        return notifications
+    
+    @strawberry.field(permission_classes=[])
+    def all_notifications(self,info:strawberry.types.Info):
+        user = info.context.request.user
+        notifications = Notification.objects.filter(user=user)
+        return notifications
+    
+    @strawberry.field(permission_classes=[])
+    def find_transaction(self,id:int,info:strawberry.types.Info):
+        transaction = Transaction.objects.get(id=id)
+        # assigned_price = PriceAssignation.objects.get(id=transaction.timbre.price.id)
+        return transaction
+    
     
 @strawberry.type
 class Mutation:
@@ -235,12 +275,13 @@ class Mutation:
     @strawberry.mutation()
     def generate_timbre(self,type_id:int,info:strawberry.types.Info)-> TimbreType:
         type = TypeTimbre.objects.get(pk=type_id)
+        assign = PriceAssignation.objects.get(type=type)
         user = info.context.request.user
         nb= Timbre.objects.all().count()+1
-        reference = f"TMB-0000{nb}"
+        reference = f"TMB-00000{nb}"
         secret = randint(500,nb*500)
         qrcode= f"{reference}|{user}|{secret}"
-        timbre = Timbre.objects.create(reference=reference,type=type,qrCode=qrcode,secret=secret,owned_by=user)
+        timbre = Timbre.objects.create(reference=reference,type=type,qrCode=qrcode,secret=secret,owned_by=user,price=assign)
         return timbre
     
     @strawberry.mutation()
@@ -265,21 +306,66 @@ class Mutation:
     @strawberry.mutation()
     def init_transaction(self,timbre:int,info:strawberry.types.Info) -> TransactionType:
         user = info.context.request.user
-        # try:
-        #     assignation = PriceAssignation.objects.create(sesson_id=sesson,type_id=type,price=price,created_by=user,updated_by=user)
-        # except Session.DoesNotExist:
-        #     return Message(success=False,message="Session not found")
-        # except TypeTimbre.DoesNotExist:
-        #     return Message(success=False,message="Timbre not found")
+        _timbre = Timbre.objects.get(pk=timbre)
+        if _timbre.used:
+            raise ValidationError(message="Timbre already used")
+        # test_transction = Transaction.objects.get(timbre=timbre)
+        # if test_transction.status
         transaction = Transaction.objects.create(timbre_id=timbre,controller=user,updated_by=user)
         return transaction
+    
+    @strawberry.mutation()
+    def transaction_observe(self,trasnctionId:int,info:strawberry.types.Info) -> TransactionType:
+        user = info.context.request.user
+        transation = Transaction.objects.get(id=trasnctionId)
+        if user.role  == "user" and transation.timbre.owned_by != user:
+            raise ValidationError(message="Cannot observe this transaction")
+        return transation
+               
+    @strawberry.mutation()
+    def end_transactions(self,transactionId:int,action:str,info:strawberry.types.Info)->Message:
+        try:
+            actions_allowed = ("accepted","rejected")
+            if not action in actions_allowed:
+                raise ValidationError(message="Action inconnue")
+            user = info.context.request.user
+            transaction = Transaction.objects.get(id=transactionId)
+            timbre = Timbre.objects.get(id=transaction.timbre.id)
+            other_transaction = Transaction.objects.filter(timbre=timbre).exclude(pk=transactionId)
+            if other_transaction:
+                other_transaction.update(updated_by = user,status="rejected")   
+            if (transaction.timbre.owned_by != user):
+                raise ValidationError(message="Cannot end other people transaction") 
+            if timbre.used:
+                raise ValidationError(message="Timbre already used")       
+            if transaction.status != "pending":
+                raise ValidationError(message="Transaction already finished")
+            transaction.status = action
+            transaction.updated_by = user
+            transaction.save()
+            timbre.used = True
+            timbre.save()
+        except Transaction.DoesNotExist:
+            Message(success=False,message="Transaction introuvable")
+        except Timbre.DoesNotExist:
+            Message(success=False,message="Timbre de la transaction introuvable")
         
-            
-            
-    
-    
-    
-        
-    
 
+    @strawberry.mutation()
+    def mark_all_as_read(self,info:strawberry.types.Info) -> Message:
+        user = info.context.request.user
+        notifs = Notification.objects.filter(user=user,read=False)
+        notifs.update(read=True)
+        return Message(success=True,message="All marked as read")
+    
+    @strawberry.mutation()
+    def mark_as_read(self,id:int,info:strawberry.types.Info) -> Message:
+        user = info.context.request.user
+        notif = Notification.objects.get(id=id)
+        notif.read = True
+        notif.save()
+        return Message(success=True,message="Marked as read")
+    
+    
+        
 schema = JwtSchema(query=Query, mutation=Mutation)

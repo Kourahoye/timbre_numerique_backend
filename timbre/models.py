@@ -62,6 +62,7 @@ class Timbre(models.Model):
     used = models.BooleanField(default=False)
     qrCode = models.CharField(max_length=30)
     secret =  models.FloatField(null=False)
+    price = models.ForeignKey(PriceAssignation,on_delete=models.CASCADE,related_name="assigned_price")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
     owned_by = models.ForeignKey(User,on_delete=models.CASCADE,related_name="timbre_owned_by")

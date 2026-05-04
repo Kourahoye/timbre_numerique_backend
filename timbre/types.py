@@ -1,3 +1,4 @@
+import json
 import strawberry
 import strawberry_django
 from timbre.models import Notification, PriceAssignation, Session, Timbre, Transaction, TypeTimbre
@@ -66,6 +67,7 @@ class PriceAssignationType:
 class TimbreType:
     id:strawberry.ID
     reference:str
+    price:PriceAssignationType
     type:TypeTimbreType
     used:bool
     qrCode:str
@@ -90,4 +92,23 @@ class TransactionType:
     updated_at:str
     controller:UserTypeMIN
     updated_by:UserTypeMIN
+
+@strawberry.type
+class TransactionTypeDetails:
+    id:strawberry.ID
+    timbre:TimbreType
+    status:str
+    created_at:str
+    updated_at:str
+    controller:UserTypeMIN
+    updated_by:UserTypeMIN
+    
+
+@strawberry_django.type(Notification)
+class NotificationType:
+    id:strawberry.ID
+    content:str
+    read:bool
+    link:strawberry.auto
+    created_at:str
     
