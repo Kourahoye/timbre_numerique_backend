@@ -37,7 +37,7 @@ class Query(UserQueries):
     all_notifications:list[NotificationType]
     new_notis_count:int
     find_transaction:TransactionTypeDetails
-    # current:Message
+    my_transactions:list[TransactionTypeDetails]
     
     @strawberry.field(permission_classes=[IsAuthenticated])
     def users(self,info:strawberry.types.Info):
@@ -70,7 +70,7 @@ class Query(UserQueries):
         timbreType = TypeTimbre.objects.all()
         return timbreType
     
-    @strawberry.field(permission_classes=[])
+    @strawberry.field(permission_classes=[IsAuthenticated])
     def prices(self,info:strawberry.types.Info):
         prices = PriceAssignation.objects.all().order_by("-created_at")
         return prices
@@ -96,7 +96,7 @@ class Query(UserQueries):
         timbres = Timbre.objects.filter(owned_by=user).order_by("-created_at")
         return timbres
     
-    @strawberry.field(permission_classes=[])
+    @strawberry.field(permission_classes=[IsAuthenticated])
     def get_timbre_price(self,id:int,info:strawberry.types.Info):
         session = Session.objects.get(active=True)
         if not session:
@@ -104,32 +104,39 @@ class Query(UserQueries):
         price = PriceAssignation.objects.get(type_id=id,session=session)
         return price
     
-    @strawberry.field(permission_classes=[])
+    @strawberry.field(permission_classes=[IsAuthenticated])
     def active_session_price(self,info:strawberry.types.Info) -> list[PriceAssignationType]:
         prices_current = PriceAssignation.objects.filter(session__active=True)
         return prices_current
     
-    @strawberry.field(permission_classes=[])
+    @strawberry.field(permission_classes=[IsAuthenticated])
     def notifications(self,info:strawberry.types.Info):
         user = info.context.request.user
         notifications = Notification.objects.filter(read=False,user=user)
         return notifications 
     
-    @strawberry.field(permission_classes=[])
+    @strawberry.field(permission_classes=[IsAuthenticated])
     def new_notis_count(self,info:strawberry.types.Info):
         user = info.context.request.user
         notifications = Notification.objects.filter(read=False,user=user).count()
         return notifications
     
-    @strawberry.field(permission_classes=[])
+    @strawberry.field(permission_classes=[IsAuthenticated])
     def all_notifications(self,info:strawberry.types.Info):
         user = info.context.request.user
         notifications = Notification.objects.filter(user=user)
         return notifications
     
-    @strawberry.field(permission_classes=[])
+    @strawberry.field(permission_classes=[IsAuthenticated])
     def find_transaction(self,id:int,info:strawberry.types.Info):
         transaction = Transaction.objects.get(id=id)
+        # assigned_price = PriceAssignation.objects.get(id=transaction.timbre.price.id)
+        return transaction
+    
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def my_transactions(self,info:strawberry.types.Info):
+        user = info.context.request.user
+        transaction = Transaction.objects.filter(timbre__owned_by=user)
         # assigned_price = PriceAssignation.objects.get(id=transaction.timbre.price.id)
         return transaction
     
