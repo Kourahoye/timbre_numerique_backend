@@ -36,11 +36,25 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # APPEND_SLASH=False
+USE_I18N = True
+
+LANGUAGE_CODE = "fr"
+
+LANGUAGES = [
+    ("fr", "Français"),
+    ("en", "English"),
+]
+
+LOCALE_PATHS = [
+    BASE_DIR / "locale",
+]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
