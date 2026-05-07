@@ -1,0 +1,98 @@
+msgid "roles.invalid"
+msgstr "Invalid role"
+
+msgid "roles.same_role"
+msgstr "You cannot change the role of a user with the same role as you"
+
+msgid "roles.controller_cannot_give_admin"
+msgstr "You cannot assign the admin role"
+
+msgid "roles.controller_cannot_change_controller"
+msgstr "You cannot change a controller's role"
+
+msgid "roles.controller_cannot_change_admin"
+msgstr "You cannot modify an admin's role"
+
+msgid "roles.cannot_change_own_role"
+msgstr "You cannot change your own role"
+
+msgid "roles.assigned"
+msgstr "Role %(role)s assigned to %(username)s"
+
+msgid "roles.user_not_found"
+msgstr "User not found"
+
+msgid "session.start_after_end"
+msgstr "Start date must be before end date"
+
+msgid "session.activated"
+msgstr "Session activated"
+
+msgid "session.deactivated"
+msgstr "Session deactivated"
+
+msgid "session.not_found"
+msgstr "Session not found"
+
+msgid "session.deleted"
+msgstr "Session deleted"
+
+msgid "session.none_active"
+msgstr "No active session"
+
+msgid "timbre_type.deleted"
+msgstr "Stamp type deleted"
+
+msgid "timbre_type.not_found"
+msgstr "Stamp type not found"
+
+msgid "price.deleted"
+msgstr "Assignment deleted"
+
+msgid "price.not_found"
+msgstr "Assignment not found"
+
+msgid "timbre.used"
+msgstr "Stamp used"
+
+msgid "timbre.not_found"
+msgstr "Stamp not found"
+
+msgid "timbre.deleted"
+msgstr "Stamp deleted"
+
+msgid "timbre.already_used"
+msgstr "This stamp has already been used"
+
+msgid "timbre.unknown"
+msgstr "Unknown stamp"
+
+msgid "user.unknown"
+msgstr "Unknown user"
+
+msgid "qrcode.wrong_format"
+msgstr "Invalid QR code format"
+
+msgid "transaction.cannot_observe"
+msgstr "You cannot observe this transaction"
+
+msgid "transaction.action_unknown"
+msgstr "Unknown action"
+
+msgid "transaction.cannot_end_others"
+msgstr "You cannot end another user's transaction"
+
+msgid "transaction.already_finished"
+msgstr "This transaction is already finished"
+
+msgid "transaction.not_found"
+msgstr "Transaction not found"
+
+msgid "transaction.timbre_not_found"
+msgstr "Transaction stamp not found"
+
+msgid "notifications.all_read"
+msgstr "All notifications marked as read"
+
+msgid "notifications.read"
+msgstr "Notification marked as read"

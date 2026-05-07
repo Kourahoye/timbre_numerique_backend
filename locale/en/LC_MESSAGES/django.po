@@ -1,0 +1,65 @@
+# assign_role
+return Message(success=False, message=_("roles.invalid"))
+return Message(success=False, message=_("roles.same_role"))
+return Message(success=False, message=_("roles.controller_cannot_give_admin"))
+return Message(success=False, message=_("roles.controller_cannot_change_controller"))
+return Message(success=False, message=_("roles.controller_cannot_change_admin"))
+return Message(success=False, message=_("roles.cannot_change_own_role"))
+return Message(success=True,  message=_("roles.assigned") % {"role": role, "username": user.username})
+return Message(success=False, message=_("roles.user_not_found"))
+
+# add_session
+raise ValidationError(message=_("session.start_after_end"))
+
+# toogle_active_session
+return Message(success=True,  message=_("session.activated"))
+return Message(success=True,  message=_("session.deactivated"))
+return Message(success=False, message=_("session.not_found"))
+
+# delete_session
+return Message(success=True,  message=_("session.deleted"))
+return Message(success=False, message=_("session.not_found"))
+
+# delete_type_timbre
+return Message(success=True,  message=_("timbre_type.deleted"))
+return Message(success=False, message=_("timbre_type.not_found"))
+
+# delete_price
+return Message(success=True,  message=_("price.deleted"))
+return Message(success=False, message=_("price.not_found"))
+
+# desactivate
+return Message(success=True,  message=_("timbre.used"))
+return Message(success=False, message=_("timbre.not_found"))
+
+# delete_timbre
+return Message(success=True,  message=_("timbre.deleted"))
+return Message(success=False, message=_("timbre.not_found"))
+
+# init_transaction
+raise ValidationError(message=_("timbre.already_used"))
+
+# transaction_observe
+raise ValidationError(message=_("transaction.cannot_observe"))
+
+# end_transactions
+raise ValidationError(message=_("transaction.action_unknown"))
+raise ValidationError(message=_("transaction.cannot_end_others"))
+raise ValidationError(message=_("timbre.already_used"))
+raise ValidationError(message=_("transaction.already_finished"))
+Message(success=False, message=_("transaction.not_found"))
+Message(success=False, message=_("transaction.timbre_not_found"))
+
+# scan
+raise ValidationError(message=_("timbre.unknown"))
+raise ValidationError(message=_("user.unknown"))
+raise ValidationError(message=_("qrcode.wrong_format"))
+
+# get_timbre_price
+raise ValidationError(message=_("session.none_active"))
+
+# mark_all_as_read
+return Message(success=True, message=_("notifications.all_read"))
+
+# mark_as_read
+return Message(success=True, message=_("notifications.read"))
