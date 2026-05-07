@@ -9,11 +9,11 @@ from django.contrib.auth.decorators import login_required
 from gqlauth.user import arg_mutations as mutations
 from gqlauth.user.queries import UserQueries
 from timbre.models import Notification, PriceAssignation, Session, Timbre, Transaction, TypeTimbre
-from timbre.types import AuthPermType, Message, NotificationType, PriceAssignationType, SessionTyoe, SessionTypeDetail, TimbreType, TransactionType, TransactionTypeDetails, TypeTimbreDetailsType, TypeTimbreType, UserTypeMIN
+from timbre.types import AuthPermType, DashboardStats, Message, NotificationType, PriceAssignationType, SessionTyoe, SessionTypeDetail, TimbreType, TransactionType, TransactionTypeDetails, TypeTimbreDetailsType, TypeTimbreType, UserTypeMIN
 from users.models import User
 from django.db.models import F
 from django.utils.translation import gettext_lazy as _
-
+from django.db import connection
  
 @strawberry.type
 class Query(UserQueries):
@@ -134,6 +134,62 @@ class Query(UserQueries):
         transaction = Transaction.objects.filter(timbre__owned_by=user)
         # assigned_price = PriceAssignation.objects.get(id=transaction.timbre.price.id)
         return transaction
+    
+    from django.db import connection
+
+    @strawberry.field
+    def dashboard_stats(self, info:strawberry.types.Info) -> DashboardStats:
+        user = info.context.request.user
+
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    -- timbres
+                    COUNT(t.id)                                         AS total_timbres,
+                    COUNT(t.id) FILTER (WHERE t.used = TRUE)            AS used_timbres,
+                    COUNT(t.id) FILTER (WHERE t.used = FALSE)           AS unused_timbres,
+                    COALESCE(SUM(pa.price) FILTER (WHERE t.used=TRUE), 0) AS total_revenue,
+
+                    -- transactions
+                    (SELECT COUNT(*) FROM timbre_transaction
+                    WHERE status = 'pending')                          AS pending_transactions,
+                    (SELECT COUNT(*) FROM timbre_transaction
+                    WHERE status = 'accepted')                         AS accepted_transactions,
+                    (SELECT COUNT(*) FROM timbre_transaction
+                    WHERE status = 'rejected')                         AS rejected_transactions,
+
+                    -- notifications non lues
+                    (SELECT COUNT(*) FROM timbre_notification
+                    WHERE user_id = %s AND read = FALSE)               AS unread_notifications,
+
+                    -- total users
+                    (SELECT COUNT(*) FROM users_user)                   AS total_users
+
+                FROM timbre_timbre t
+                LEFT JOIN timbre_priceassignation pa ON pa.id = t.price_id
+            """, [user.pk])
+
+            row = cursor.fetchone()
+            (
+                total, used, unused, revenue,
+                pending, accepted, rejected,
+                unread, total_users
+            ) = row
+
+        active_session = Session.objects.filter(active=True).first()
+
+        return DashboardStats(
+            total_timbres=total,
+            used_timbres=used,
+            unused_timbres=unused,
+            total_revenue=float(revenue),
+            pending_transactions=pending,
+            accepted_transactions=accepted,
+            rejected_transactions=rejected,
+            active_session=active_session,
+            unread_notifications=unread,
+            total_users=total_users,
+        )
     
     
 @strawberry.type

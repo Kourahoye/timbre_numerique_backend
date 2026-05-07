@@ -25,6 +25,7 @@ class Message:
 class SessionTyoe:
     id:strawberry.ID
     name:str
+    
 @strawberry_django.type(Session)
 class SessionTypeDetail:
     id:strawberry.ID
@@ -112,3 +113,18 @@ class NotificationType:
     link:strawberry.auto
     created_at:str
     
+
+@strawberry.type
+class DashboardStats:
+    total_timbres: int
+    used_timbres: int
+    unused_timbres: int
+    total_revenue: float             # somme price.price des timbres vendus
+
+    pending_transactions: int
+    accepted_transactions: int
+    rejected_transactions: int
+
+    active_session: SessionTyoe
+    unread_notifications: int        # pour l'utilisateur connecté
+    total_users: int
