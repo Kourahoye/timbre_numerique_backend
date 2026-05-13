@@ -22,6 +22,9 @@ msgstr "Role %(role)s assigned to %(username)s"
 msgid "roles.user_not_found"
 msgstr "User not found"
 
+msgid "roles.insufusant"
+msgstr "Insufusant privilege"
+
 msgid "session.start_after_end"
 msgstr "Start date must be before end date"
 

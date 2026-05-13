@@ -25,6 +25,7 @@ class Message:
 class SessionTyoe:
     id:strawberry.ID
     name:str
+    active:bool
     
 @strawberry_django.type(Session)
 class SessionTypeDetail:

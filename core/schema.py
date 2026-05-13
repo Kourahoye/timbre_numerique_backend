@@ -1,6 +1,7 @@
 from random import randint
 from sqlite3 import Date
 from django.forms import ValidationError
+from graphql import GraphQLError
 import strawberry
 from core.permissions import IsAuthenticated
 from gqlauth.core.middlewares import JwtSchema
@@ -33,6 +34,9 @@ class Query(UserQueries):
     new_notis_count:int
     find_transaction:TransactionTypeDetails
     my_transactions:list[TransactionTypeDetails]
+    timbres : list[TimbreType]
+    transactions:list[TransactionTypeDetails]
+    
     
     @strawberry.field(permission_classes=[IsAuthenticated])
     def users(self,info:strawberry.types.Info):
@@ -59,6 +63,15 @@ class Query(UserQueries):
     def timbreType(self,info:strawberry.types.Info):
         timbreType = TypeTimbre.objects.all()
         return timbreType
+    
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def timbres(self,info:strawberry.types.Info):
+        user = info.context.request.user
+        # print(user.role)
+        # if user.role != "admin":
+        #     raise GraphQLError(message=_("roles.insufusant"))
+        timbre = Timbre.objects.all()
+        return timbre
     
     @strawberry.field(permission_classes=[IsAuthenticated])
     def getTimbresType(self,info:strawberry.types.Info):
@@ -125,14 +138,17 @@ class Query(UserQueries):
     @strawberry.field(permission_classes=[IsAuthenticated])
     def find_transaction(self,id:int,info:strawberry.types.Info):
         transaction = Transaction.objects.get(id=id)
-        # assigned_price = PriceAssignation.objects.get(id=transaction.timbre.price.id)
         return transaction
     
     @strawberry.field(permission_classes=[IsAuthenticated])
     def my_transactions(self,info:strawberry.types.Info):
         user = info.context.request.user
         transaction = Transaction.objects.filter(timbre__owned_by=user)
-        # assigned_price = PriceAssignation.objects.get(id=transaction.timbre.price.id)
+        return transaction
+    
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    def transactions(self,info:strawberry.types.Info):
+        transaction = Transaction.objects.all()
         return transaction
     
     from django.db import connection

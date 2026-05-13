@@ -82,10 +82,12 @@ class Timbre(models.Model):
             ("create_stamp", "Can create stamp"),
             ("sell_stamp", "Can sell stamp"),
             ("view_sales", "Can view sales"),
+            ("view_dashboard_minimal","Can view minimal Dashboard"),
 
             # --- ADMIN ---
             ("manage_users", "Can manage users"),
             ("view_all_stamps", "Can view all stamps"),
+            ("view_dashboard_global","Can view global Dashboard")
         ]
 
     def __str__(self):

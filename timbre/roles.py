@@ -13,6 +13,7 @@ ROLES = {
         "sell_stamp",
         "view_sales",
         "generate_qr",
+        "view_dashboard_minimal"
     ],
     "ADMIN": [
         # tout controller
@@ -30,5 +31,6 @@ ROLES = {
         "download_pdf",
         "manage_users",
         "view_all_stamps",
+        "view_dashboard_global"
     ],
 }
