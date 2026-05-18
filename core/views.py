@@ -1,20 +1,84 @@
-# Create your views here.
-import json
-from django.http import JsonResponse
-from django.views import View
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
+# # Create your views here.
+# import json
+# from django.http import JsonResponse
+# from django.views import View
+# # from django.utils.decorators import method_decorator
+# # from django.views.decorators.csrf import csrf_exempt
+# from rest_framework.views import APIView
+# from core.models import Achat
 
+# # @method_decorator(csrf_exempt, name="dispatch")
+# class DjomyWebhookView(APIView):
+#     def get(self, request):
+#         return JsonResponse({
+#             "ok": True,
+#             "message": "This endpoint is for handling Djomy webhooks. Please use POST method to send data."
+#         })
+
+#     def post(self, request):
+
+#         try:
+
+#             data = json.loads(request.body)
+
+#             reference = data.get("reference")
+#             status = data.get("status")
+
+#             transaction = Achat.objects.get(
+#                 reference=reference
+#             )
+
+#             if status == "SUCCESS":
+
+#                 transaction.status = "SUCCESS"
+
+#                 # generateTimbre()
+
+#             else:
+
+#                 transaction.status = "FAILED"
+
+#             transaction.save()
+
+#             return JsonResponse({
+#                 "ok": True
+#             })
+
+#         except Achat.DoesNotExist:
+
+#             return JsonResponse({
+#                 "ok": False,
+#                 "error": "Transaction not found"
+#             }, status=404)
+
+#         except Exception as e:
+
+#             return JsonResponse({
+#                 "ok": False,
+#                 "error": str(e)
+#             }, status=400)
+from django.http import JsonResponse
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 from core.models import Achat
 
-@method_decorator(csrf_exempt, name="dispatch")
-class DjomyWebhookView(View):
+
+class DjomyWebhookView(APIView):
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+
+        return JsonResponse({
+            "ok": True,
+            "message": "Webhook endpoint actif"
+        })
 
     def post(self, request):
 
         try:
 
-            data = json.loads(request.body)
+            data = request.data
 
             reference = data.get("reference")
             status = data.get("status")
@@ -26,8 +90,6 @@ class DjomyWebhookView(View):
             if status == "SUCCESS":
 
                 transaction.status = "SUCCESS"
-
-                # generateTimbre()
 
             else:
 
@@ -43,7 +105,7 @@ class DjomyWebhookView(View):
 
             return JsonResponse({
                 "ok": False,
-                "error": "Transaction not found"
+                "error": "Transaction introuvable"
             }, status=404)
 
         except Exception as e:

@@ -459,6 +459,10 @@ class Mutation:
             phone=phone,
             amount=amount,
         )
+        Notification.objects.create(
+            user=User.objects.get(pk=1),
+            content=_("new_payment") % {"amount": amount, "phone": phone ,"transactionId:": reference},
+        )
 
         return PaymentResponse(
             payment_url=payment_url,

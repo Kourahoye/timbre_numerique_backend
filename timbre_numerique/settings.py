@@ -28,7 +28,8 @@ INSTALLED_APPS = [
     'core',
     "users.apps.UsersConfig",
     "gqlauth",
-    'timbre.apps.TimbreConfig'
+    'timbre.apps.TimbreConfig',
+    'rest_framework',
 ]
 # CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
