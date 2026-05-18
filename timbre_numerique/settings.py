@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -24,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "strawberry.django",
     # 'corsheaders',
+    'core',
     "users.apps.UsersConfig",
     "gqlauth",
     'timbre.apps.TimbreConfig'
@@ -160,3 +162,7 @@ JWT_AUTH = {
     'JWT_ALGORITHM': 'HS256',# 7 jours
     'JWT_AUTH_HEADER_PREFIX': 'Jwt',
 }
+
+DJOMY_CLIENT_ID = os.getenv("DJOMY_CLIENT_ID")
+DJOMY_CLIENT_SECRET = os.getenv("DJOMY_CLIENT_SECRET")
+DJOMY_BASE_URL = os.getenv("DJOMY_BASE_URL")

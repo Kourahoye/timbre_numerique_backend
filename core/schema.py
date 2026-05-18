@@ -3,6 +3,7 @@ from sqlite3 import Date
 from django.forms import ValidationError
 from graphql import GraphQLError
 import strawberry
+from core.models import Achat
 from core.permissions import IsAuthenticated
 from gqlauth.core.middlewares import JwtSchema
 from django.contrib.auth import get_user_model
@@ -10,7 +11,8 @@ from django.contrib.auth.decorators import login_required
 from gqlauth.user import arg_mutations as mutations
 from gqlauth.user.queries import UserQueries
 from timbre.models import Notification, PriceAssignation, Session, Timbre, Transaction, TypeTimbre
-from timbre.types import AuthPermType, DashboardStats, Message, NotificationType, PriceAssignationType, SessionTyoe, SessionTypeDetail, TimbreType, TransactionType, TransactionTypeDetails, TypeTimbreDetailsType, TypeTimbreType, UserTypeMIN
+from timbre.services.djomy import create_payment
+from timbre.types import AuthPermType, DashboardStats, Message, NotificationType, PaymentResponse, PriceAssignationType, SessionTyoe, SessionTypeDetail, TimbreType, TransactionType, TransactionTypeDetails, TypeTimbreDetailsType, TypeTimbreType, UserTypeMIN
 from users.models import User
 from django.db.models import F
 from django.utils.translation import gettext_lazy as _
@@ -440,6 +442,28 @@ class Mutation:
         notif.save()
         return Message(success=True,message=_("notifications.read"))
     
+    @strawberry.mutation()
+    def initiate_payment(
+        self,
+        phone: str,
+        amount: int,
+    ) -> PaymentResponse:
+
+        response = create_payment(phone, amount)
+        # print(response)
+        payment_url = response["redirectUrl"]
+        reference = response["transactionId"]
+
+        Achat.objects.create(
+            reference=reference,
+            phone=phone,
+            amount=amount,
+        )
+
+        return PaymentResponse(
+            payment_url=payment_url,
+            reference=reference,
+        )
     
         
 schema = JwtSchema(query=Query, mutation=Mutation)

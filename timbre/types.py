@@ -129,3 +129,8 @@ class DashboardStats:
     active_session: SessionTyoe
     unread_notifications: int        # pour l'utilisateur connecté
     total_users: int
+    
+@strawberry.type
+class PaymentResponse:
+    payment_url: str
+    reference: str
