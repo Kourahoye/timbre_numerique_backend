@@ -1,101 +1,114 @@
+# Français
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: fr\n"
+
 msgid "roles.invalid"
-msgstr "Invalid role"
+msgstr "Rôle invalide"
 
 msgid "roles.same_role"
-msgstr "You cannot change the role of a user with the same role as you"
+msgstr "Vous ne pouvez pas modifier le rôle d'un utilisateur ayant le même rôle que vous"
 
 msgid "roles.controller_cannot_give_admin"
-msgstr "You cannot assign the admin role"
+msgstr "Vous ne pouvez pas attribuer le rôle administrateur"
 
 msgid "roles.controller_cannot_change_controller"
-msgstr "You cannot change a controller's role"
+msgstr "Vous ne pouvez pas modifier le rôle d'un contrôleur"
 
 msgid "roles.controller_cannot_change_admin"
-msgstr "You cannot modify an admin's role"
+msgstr "Vous ne pouvez pas modifier le rôle d'un administrateur"
 
 msgid "roles.cannot_change_own_role"
-msgstr "You cannot change your own role"
+msgstr "Vous ne pouvez pas modifier votre propre rôle"
 
 msgid "roles.assigned"
-msgstr "Role %(role)s assigned to %(username)s"
+msgstr "Rôle %(role)s attribué à %(username)s"
 
 msgid "roles.user_not_found"
-msgstr "User not found"
+msgstr "Utilisateur introuvable"
 
 msgid "roles.insufusant"
-msgstr "Insufusant privilege"
+msgstr "Privilèges insuffisants"
 
 msgid "session.start_after_end"
-msgstr "Start date must be before end date"
+msgstr "La date de début doit être antérieure à la date de fin"
 
 msgid "session.activated"
-msgstr "Session activated"
+msgstr "Session activée"
 
 msgid "session.deactivated"
-msgstr "Session deactivated"
+msgstr "Session désactivée"
 
 msgid "session.not_found"
-msgstr "Session not found"
+msgstr "Session introuvable"
 
 msgid "session.deleted"
-msgstr "Session deleted"
+msgstr "Session supprimée"
 
 msgid "session.none_active"
-msgstr "No active session"
+msgstr "Aucune session active"
 
 msgid "timbre_type.deleted"
-msgstr "Stamp type deleted"
+msgstr "Type de timbre supprimé"
 
 msgid "timbre_type.not_found"
-msgstr "Stamp type not found"
+msgstr "Type de timbre introuvable"
 
 msgid "price.deleted"
-msgstr "Assignment deleted"
+msgstr "Affectation supprimée"
 
 msgid "price.not_found"
-msgstr "Assignment not found"
+msgstr "Affectation introuvable"
 
 msgid "timbre.used"
-msgstr "Stamp used"
+msgstr "Timbre utilisé"
 
 msgid "timbre.not_found"
-msgstr "Stamp not found"
+msgstr "Timbre introuvable"
 
 msgid "timbre.deleted"
-msgstr "Stamp deleted"
+msgstr "Timbre supprimé"
 
 msgid "timbre.already_used"
-msgstr "This stamp has already been used"
+msgstr "Ce timbre a déjà été utilisé"
 
 msgid "timbre.unknown"
-msgstr "Unknown stamp"
+msgstr "Timbre inconnu"
 
 msgid "user.unknown"
-msgstr "Unknown user"
+msgstr "Utilisateur inconnu"
 
 msgid "qrcode.wrong_format"
-msgstr "Invalid QR code format"
+msgstr "Format de QR code invalide"
 
 msgid "transaction.cannot_observe"
-msgstr "You cannot observe this transaction"
+msgstr "Vous ne pouvez pas observer cette transaction"
 
 msgid "transaction.action_unknown"
-msgstr "Unknown action"
+msgstr "Action inconnue"
+
+msgid "transaction.accepted"
+msgstr "Transaction acceptée"
+
+msgid "transaction.rejected"
+msgstr "Transaction rejetée"
 
 msgid "transaction.cannot_end_others"
-msgstr "You cannot end another user's transaction"
+msgstr "Vous ne pouvez pas terminer la transaction d'un autre utilisateur"
 
 msgid "transaction.already_finished"
-msgstr "This transaction is already finished"
+msgstr "Cette transaction est déjà terminée"
 
 msgid "transaction.not_found"
-msgstr "Transaction not found"
+msgstr "Transaction introuvable"
 
 msgid "transaction.timbre_not_found"
-msgstr "Transaction stamp not found"
+msgstr "Timbre de la transaction introuvable"
 
 msgid "notifications.all_read"
-msgstr "All notifications marked as read"
+msgstr "Toutes les notifications ont été marquées comme lues"
 
 msgid "notifications.read"
-msgstr "Notification marked as read"
+msgstr "Notification marquée comme lue"

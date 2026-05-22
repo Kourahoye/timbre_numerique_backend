@@ -24,7 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "strawberry.django",
-    # 'corsheaders',
+    'corsheaders',
     'core',
     "users.apps.UsersConfig",
     "gqlauth",
@@ -35,15 +35,16 @@ INSTALLED_APPS = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://localhost:5173",
-    "https://swimmer-bullwhip-rearview.ngrok-free.dev"
+    "https://swimmer-bullwhip-rearview.ngrok-free.dev",
+    "https://sandbox-api.djomy.africa"
     
 ]
 
 # APPEND_SLASH=False
 USE_I18N = True
-
-LANGUAGE_CODE = "fr"
-
+# LANGUAGE_CODE = 'fr'
+USE_I18N = True
+USE_L10N = True
 LANGUAGES = [
     ("fr", "Français"),
     ("en", "English"),
@@ -52,20 +53,27 @@ LANGUAGES = [
 LOCALE_PATHS = [
     BASE_DIR / "locale",
 ]
-
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'accept-language',   # ← ajouter explicitement
+    'authorization',
+    'content-type',
+    'origin',
+    'x-csrftoken',
+]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',      
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.locale.LocaleMiddleware',    
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'gqlauth.core.middlewares.django_jwt_middleware'
+    'gqlauth.core.middlewares.django_jwt_middleware',
 ]
 
 ROOT_URLCONF = 'timbre_numerique.urls'
@@ -130,7 +138,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
 

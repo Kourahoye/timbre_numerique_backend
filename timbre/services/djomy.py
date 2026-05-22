@@ -76,7 +76,7 @@ def create_payment(phone: str, amount: int) -> dict:
         "payerNumber": phone,  # Doit être au format international ex: 002246XXXXXXXX
         "description": "Paiement timbre",
         "merchantPaymentReference": merchant_reference,
-        "returnUrl": "https://swimmer-bullwhip-rearview.ngrok-free.dev/djomy/webhook/",
+        "returnUrl": "https://swimmer-bullwhip-rearview.ngrok-free.dev/webhook/",
         "cancelUrl": "https://votre-domaine.com/payment/cancel",
         "metadata": {
             "order_id": merchant_reference,
@@ -99,7 +99,7 @@ def create_payment(phone: str, amount: int) -> dict:
         )
     
     result = response.json()
-    print(result)
+    # print(result)
     # Vérifier la structure de la réponse
     if result.get("success") and result.get("data"):
         return result["data"]

@@ -1,13 +1,12 @@
 from random import randint
 from sqlite3 import Date
 from django.forms import ValidationError
-from graphql import GraphQLError
+from django.utils import translation
 import strawberry
+from core.middleware import LanguageExtension
 from core.models import Achat
 from core.permissions import IsAuthenticated
 from gqlauth.core.middlewares import JwtSchema
-from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required
 from gqlauth.user import arg_mutations as mutations
 from gqlauth.user.queries import UserQueries
 from timbre.models import Notification, PriceAssignation, Session, Timbre, Transaction, TypeTimbre
@@ -15,8 +14,9 @@ from timbre.services.djomy import create_payment
 from timbre.types import AuthPermType, DashboardStats, Message, NotificationType, PaymentResponse, PriceAssignationType, SessionTyoe, SessionTypeDetail, TimbreType, TransactionType, TransactionTypeDetails, TypeTimbreDetailsType, TypeTimbreType, UserTypeMIN
 from users.models import User
 from django.db.models import F
-from django.utils.translation import gettext_lazy as _
 from django.db import connection
+from django.utils.translation import gettext as _
+from strawberry.types import Info
  
 @strawberry.type
 class Query(UserQueries):
@@ -87,6 +87,8 @@ class Query(UserQueries):
     
     @strawberry.field(permission_classes=[IsAuthenticated])
     def scan(self,code:str,info:strawberry.types.Info):
+        # lang = translation.get_language()
+        # print(f">>> Langue active: {lang}")  
         try:
             ref,owner,secret = code.split("|")
             usr = User.objects.get(username=owner)
@@ -405,26 +407,27 @@ class Mutation:
             if not action in actions_allowed:
                 raise ValidationError(message=_("transaction.action_unknown"))
             user = info.context.request.user
-            transaction = Transaction.objects.get(id=transactionId)
+            transaction = Transaction.objects.get(pk=transactionId)
             timbre = Timbre.objects.get(id=transaction.timbre.id)
             other_transaction = Transaction.objects.filter(timbre=timbre).exclude(pk=transactionId)
-            if other_transaction:
-                other_transaction.update(updated_by = user,status="rejected")   
             if (transaction.timbre.owned_by != user):
                 raise ValidationError(message=_("transaction.cannot_end_others")) 
             if timbre.used:
                 raise ValidationError(message=_("timbre.already_used"))       
             if transaction.status != "pending":
                 raise ValidationError(message=_("transaction.already_finished"))
+            if other_transaction:
+                other_transaction.update(updated_by = user,status="rejected")   
             transaction.status = action
             transaction.updated_by = user
             transaction.save()
             timbre.used = True
             timbre.save()
+            return Message(success=True,message=_("transaction.%s" % action))
         except Transaction.DoesNotExist:
-            Message(success=False,message=_("transaction.not_found"))
+           return  Message(success=False,message=_("transaction.not_found"))
         except Timbre.DoesNotExist:
-            Message(success=False,message=_("transaction.timbre_not_found"))
+           return Message(success=False,message=_("transaction.timbre_not_found"))
         
 
     @strawberry.mutation()
@@ -447,27 +450,39 @@ class Mutation:
         self,
         phone: str,
         amount: int,
+        type:int,
+        info:strawberry.types.Info
     ) -> PaymentResponse:
-
+        user = info.context.request.user
         response = create_payment(phone, amount)
         # print(response)
         payment_url = response["redirectUrl"]
-        reference = response["transactionId"]
+        reference = response["merchantPaymentReference"]
 
         Achat.objects.create(
             reference=reference,
             phone=phone,
             amount=amount,
+            user=user,
+            type=TypeTimbre.objects.get(pk=type)
         )
         Notification.objects.create(
-            user=User.objects.get(pk=1),
-            content=_("new_payment") % {"amount": amount, "phone": phone ,"transactionId:": reference},
+            user=user,
+            content=f"Paiement en attente de confirmation:\n Montant:{amount}\nTelephone:{phone}\ntransactionId:{reference}\n{payment_url}",
         )
 
         return PaymentResponse(
             payment_url=payment_url,
             reference=reference,
         )
-    
         
-schema = JwtSchema(query=Query, mutation=Mutation)
+    @strawberry.mutation()
+    def set_language(self, info: Info, language_code: str) -> bool:
+        from django.conf import settings
+        if language_code in dict(settings.LANGUAGES):
+            info.context.request.session['_language'] = language_code
+            translation.activate(language_code)
+            return True
+        return False
+        
+schema = JwtSchema(query=Query, mutation=Mutation,extensions=[LanguageExtension])
