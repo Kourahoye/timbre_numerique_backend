@@ -60,7 +60,7 @@ class Timbre(models.Model):
     reference = models.CharField(unique=True,null=False,blank=False)
     type = models.ForeignKey(TypeTimbre,on_delete=models.CASCADE,related_name="type")
     used = models.BooleanField(default=False)
-    qrCode = models.CharField(max_length=30)
+    qrCode = models.CharField(max_length=100)
     secret =  models.FloatField(null=False)
     price = models.ForeignKey(PriceAssignation,on_delete=models.CASCADE,related_name="assigned_price")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -109,7 +109,8 @@ class Transaction(models.Model):
         return f"Utilisation du timbre {self.timbre} par {self.controller}"
     
 class Notification(models.Model):
-    content = models.CharField(max_length=100,null=False)
+    title = models.CharField(max_length=100,null=False)
+    content = models.TextField(null=False)
     read = models.BooleanField(default=False,null=False)
     link = models.JSONField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)

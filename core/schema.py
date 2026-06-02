@@ -1,20 +1,22 @@
 from random import randint
 from sqlite3 import Date
 from django.forms import ValidationError
-from graphql import GraphQLError
+from django.utils import translation
 import strawberry
+from core.middleware import LanguageExtension
+from core.models import Achat
 from core.permissions import IsAuthenticated
 from gqlauth.core.middlewares import JwtSchema
-from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required
 from gqlauth.user import arg_mutations as mutations
 from gqlauth.user.queries import UserQueries
 from timbre.models import Notification, PriceAssignation, Session, Timbre, Transaction, TypeTimbre
-from timbre.types import AuthPermType, DashboardStats, Message, NotificationType, PriceAssignationType, SessionTyoe, SessionTypeDetail, TimbreType, TransactionType, TransactionTypeDetails, TypeTimbreDetailsType, TypeTimbreType, UserTypeMIN
+from timbre.services.djomy import create_payment
+from timbre.types import AuthPermType, DashboardStats, Message, NotificationType, PaymentResponse, PriceAssignationType, SessionTyoe, SessionTypeDetail, TimbreType, TransactionType, TransactionTypeDetails, TypeTimbreDetailsType, TypeTimbreType, UserTypeMIN
 from users.models import User
 from django.db.models import F
-from django.utils.translation import gettext_lazy as _
 from django.db import connection
+from django.utils.translation import gettext as _
+from strawberry.types import Info
  
 @strawberry.type
 class Query(UserQueries):
@@ -51,7 +53,7 @@ class Query(UserQueries):
     
     @strawberry.field(permission_classes=[IsAuthenticated])
     def sessionInfos(self,info:strawberry.types.Info):
-        sessions = Session.objects.all()
+        sessions = Session.objects.all().order_by("created_at")
         return sessions
     
     @strawberry.field(permission_classes=[IsAuthenticated])
@@ -67,9 +69,6 @@ class Query(UserQueries):
     @strawberry.field(permission_classes=[IsAuthenticated])
     def timbres(self,info:strawberry.types.Info):
         user = info.context.request.user
-        # print(user.role)
-        # if user.role != "admin":
-        #     raise GraphQLError(message=_("roles.insufusant"))
         timbre = Timbre.objects.all()
         return timbre
     
@@ -85,6 +84,8 @@ class Query(UserQueries):
     
     @strawberry.field(permission_classes=[IsAuthenticated])
     def scan(self,code:str,info:strawberry.types.Info):
+        # lang = translation.get_language()
+        # print(f">>> Langue active: {lang}")  
         try:
             ref,owner,secret = code.split("|")
             usr = User.objects.get(username=owner)
@@ -215,7 +216,8 @@ class Mutation:
     token_auth = mutations.ObtainJSONWebToken.field
     refresh_token = mutations.RefreshToken.field
     logout = mutations.RevokeToken.field
-     
+    change_password = mutations.PasswordChange.field
+    verify_account = mutations.VerifyAccount.field
     
     @strawberry.mutation()
     def assign_role(self,user_id:int,role:str,info:strawberry.types.Info) -> Message:
@@ -241,6 +243,26 @@ class Mutation:
         except User.DoesNotExist:
             return Message(success=False,message=_("roles.user_not_found"))
     
+    @strawberry.mutation()
+    def changeFirstName(self,nom:str,info:strawberry.types.Info)->Message:
+        try:
+            user = info.context.request.user
+            user.first_name = nom
+            user.save()
+            return Message(success=True,message=_("user.first_name_changed"))
+        except Exception:
+            return Message(success=False,message=_("user.first_name_change_failed"))
+    
+    @strawberry.mutation()
+    def changeLastName(self,nom:str,info:strawberry.types.Info)->Message:
+        try:
+            user = info.context.request.user
+            user.last_name = nom
+            user.save()
+            return Message(success=True,message=_("user.last_name_changed"))
+        except Exception:
+            return Message(success=False,message=_("user.last_name_change_failed"))
+        
     @strawberry.mutation()
     def add_session(self,name:str,start:Date,end:Date,info:strawberry.types.Info) ->SessionTyoe:
         user = info.context.request.user
@@ -403,26 +425,27 @@ class Mutation:
             if not action in actions_allowed:
                 raise ValidationError(message=_("transaction.action_unknown"))
             user = info.context.request.user
-            transaction = Transaction.objects.get(id=transactionId)
+            transaction = Transaction.objects.get(pk=transactionId)
             timbre = Timbre.objects.get(id=transaction.timbre.id)
             other_transaction = Transaction.objects.filter(timbre=timbre).exclude(pk=transactionId)
-            if other_transaction:
-                other_transaction.update(updated_by = user,status="rejected")   
             if (transaction.timbre.owned_by != user):
                 raise ValidationError(message=_("transaction.cannot_end_others")) 
             if timbre.used:
                 raise ValidationError(message=_("timbre.already_used"))       
             if transaction.status != "pending":
                 raise ValidationError(message=_("transaction.already_finished"))
+            if other_transaction:
+                other_transaction.update(updated_by = user,status="rejected")   
             transaction.status = action
             transaction.updated_by = user
             transaction.save()
             timbre.used = True
             timbre.save()
+            return Message(success=True,message=_("transaction.%s" % action))
         except Transaction.DoesNotExist:
-            Message(success=False,message=_("transaction.not_found"))
+           return  Message(success=False,message=_("transaction.not_found"))
         except Timbre.DoesNotExist:
-            Message(success=False,message=_("transaction.timbre_not_found"))
+           return Message(success=False,message=_("transaction.timbre_not_found"))
         
 
     @strawberry.mutation()
@@ -440,6 +463,44 @@ class Mutation:
         notif.save()
         return Message(success=True,message=_("notifications.read"))
     
-    
+    @strawberry.mutation()
+    def initiate_payment(
+        self,
+        phone: str,
+        amount: int,
+        type:int,
+        info:strawberry.types.Info
+    ) -> PaymentResponse:
+        user = info.context.request.user
+        response = create_payment(phone, amount)
+        # print(response)
+        payment_url = response["redirectUrl"]
+        reference = response["merchantPaymentReference"]
+
+        Achat.objects.create(
+            reference=reference,
+            phone=phone,
+            amount=amount,
+            user=user,
+            type=TypeTimbre.objects.get(pk=type)
+        )
+        Notification.objects.create(
+            user=user,
+            content=f"Paiement en attente de confirmation:\n Montant:{amount}\nTelephone:{phone}\ntransactionId:{reference}\n{payment_url}",
+        )
+
+        return PaymentResponse(
+            payment_url=payment_url,
+            reference=reference,
+        )
         
-schema = JwtSchema(query=Query, mutation=Mutation)
+    @strawberry.mutation()
+    def set_language(self, info: Info, language_code: str) -> bool:
+        from django.conf import settings
+        if language_code in dict(settings.LANGUAGES):
+            info.context.request.session['_language'] = language_code
+            translation.activate(language_code)
+            return True
+        return False
+        
+schema = JwtSchema(query=Query, mutation=Mutation,extensions=[LanguageExtension])

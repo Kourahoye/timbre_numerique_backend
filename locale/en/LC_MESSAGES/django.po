@@ -1,65 +1,117 @@
-# assign_role
-return Message(success=False, message=_("roles.invalid"))
-return Message(success=False, message=_("roles.same_role"))
-return Message(success=False, message=_("roles.controller_cannot_give_admin"))
-return Message(success=False, message=_("roles.controller_cannot_change_controller"))
-return Message(success=False, message=_("roles.controller_cannot_change_admin"))
-return Message(success=False, message=_("roles.cannot_change_own_role"))
-return Message(success=True,  message=_("roles.assigned") % {"role": role, "username": user.username})
-return Message(success=False, message=_("roles.user_not_found"))
+msgid "roles.invalid"
+msgstr "Invalid role"
 
-# add_session
-raise ValidationError(message=_("session.start_after_end"))
+msgid "roles.same_role"
+msgstr "You cannot change the role of a user with the same role as you"
 
-# toogle_active_session
-return Message(success=True,  message=_("session.activated"))
-return Message(success=True,  message=_("session.deactivated"))
-return Message(success=False, message=_("session.not_found"))
+msgid "roles.controller_cannot_give_admin"
+msgstr "You cannot assign the admin role"
 
-# delete_session
-return Message(success=True,  message=_("session.deleted"))
-return Message(success=False, message=_("session.not_found"))
+msgid "roles.controller_cannot_change_controller"
+msgstr "You cannot change a controller's role"
 
-# delete_type_timbre
-return Message(success=True,  message=_("timbre_type.deleted"))
-return Message(success=False, message=_("timbre_type.not_found"))
+msgid "roles.controller_cannot_change_admin"
+msgstr "You cannot modify an admin's role"
 
-# delete_price
-return Message(success=True,  message=_("price.deleted"))
-return Message(success=False, message=_("price.not_found"))
+msgid "roles.cannot_change_own_role"
+msgstr "You cannot change your own role"
 
-# desactivate
-return Message(success=True,  message=_("timbre.used"))
-return Message(success=False, message=_("timbre.not_found"))
+msgid "roles.assigned"
+msgstr "Role %(role)s assigned to %(username)s"
 
-# delete_timbre
-return Message(success=True,  message=_("timbre.deleted"))
-return Message(success=False, message=_("timbre.not_found"))
+msgid "roles.user_not_found"
+msgstr "User not found"
 
-# init_transaction
-raise ValidationError(message=_("timbre.already_used"))
+msgid "roles.insufusant"
+msgstr "Insufusant privilege"
 
-# transaction_observe
-raise ValidationError(message=_("transaction.cannot_observe"))
+msgid "session.start_after_end"
+msgstr "Start date must be before end date"
 
-# end_transactions
-raise ValidationError(message=_("transaction.action_unknown"))
-raise ValidationError(message=_("transaction.cannot_end_others"))
-raise ValidationError(message=_("timbre.already_used"))
-raise ValidationError(message=_("transaction.already_finished"))
-Message(success=False, message=_("transaction.not_found"))
-Message(success=False, message=_("transaction.timbre_not_found"))
+msgid "session.activated"
+msgstr "Session activated"
 
-# scan
-raise ValidationError(message=_("timbre.unknown"))
-raise ValidationError(message=_("user.unknown"))
-raise ValidationError(message=_("qrcode.wrong_format"))
+msgid "session.deactivated"
+msgstr "Session deactivated"
 
-# get_timbre_price
-raise ValidationError(message=_("session.none_active"))
+msgid "session.not_found"
+msgstr "Session not found"
 
-# mark_all_as_read
-return Message(success=True, message=_("notifications.all_read"))
+msgid "session.deleted"
+msgstr "Session deleted"
 
-# mark_as_read
-return Message(success=True, message=_("notifications.read"))
+msgid "session.none_active"
+msgstr "No active session"
+
+msgid "timbre_type.deleted"
+msgstr "Stamp type deleted"
+
+msgid "timbre_type.not_found"
+msgstr "Stamp type not found"
+
+msgid "price.deleted"
+msgstr "Assignment deleted"
+
+msgid "price.not_found"
+msgstr "Assignment not found"
+
+msgid "timbre.used"
+msgstr "Stamp used"
+
+msgid "timbre.not_found"
+msgstr "Stamp not found"
+
+msgid "timbre.deleted"
+msgstr "Stamp deleted"
+
+msgid "timbre.already_used"
+msgstr "This stamp has already been used"
+
+msgid "timbre.unknown"
+msgstr "Unknown stamp"
+
+msgid "user.unknown"
+msgstr "Unknown user"
+
+msgid "user.first_name_changed"
+msgstr "First name changed"
+
+msgid "user.last_name_changed"
+msgstr "Last name changed"
+
+msgid "user.last_name_change_failed"
+msgstr "Last name change failed"
+
+msgid "qrcode.wrong_format"
+msgstr "Invalid QR code format"
+
+msgid "transaction.cannot_observe"
+msgstr "You cannot observe this transaction"
+
+msgid "transaction.action_unknown"
+msgstr "Unknown action"
+
+msgid "transaction.accepted"
+msgstr "Transaction accepted"
+
+msgid "transaction.rejected"
+msgstr "Transaction rejected"
+
+
+msgid "transaction.cannot_end_others"
+msgstr "You cannot end another user's transaction"
+
+msgid "transaction.already_finished"
+msgstr "This transaction is already finished"
+
+msgid "transaction.not_found"
+msgstr "Transaction not found"
+
+msgid "transaction.timbre_not_found"
+msgstr "Transaction stamp not found"
+
+msgid "notifications.all_read"
+msgstr "All notifications marked as read"
+
+msgid "notifications.read"
+msgstr "Notification marked as read"
