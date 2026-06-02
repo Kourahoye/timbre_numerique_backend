@@ -53,7 +53,7 @@ class Query(UserQueries):
     
     @strawberry.field(permission_classes=[IsAuthenticated])
     def sessionInfos(self,info:strawberry.types.Info):
-        sessions = Session.objects.all()
+        sessions = Session.objects.all().order_by("created_at")
         return sessions
     
     @strawberry.field(permission_classes=[IsAuthenticated])
@@ -69,9 +69,6 @@ class Query(UserQueries):
     @strawberry.field(permission_classes=[IsAuthenticated])
     def timbres(self,info:strawberry.types.Info):
         user = info.context.request.user
-        # print(user.role)
-        # if user.role != "admin":
-        #     raise GraphQLError(message=_("roles.insufusant"))
         timbre = Timbre.objects.all()
         return timbre
     
@@ -219,7 +216,8 @@ class Mutation:
     token_auth = mutations.ObtainJSONWebToken.field
     refresh_token = mutations.RefreshToken.field
     logout = mutations.RevokeToken.field
-     
+    change_password = mutations.PasswordChange.field
+    verify_account = mutations.VerifyAccount.field
     
     @strawberry.mutation()
     def assign_role(self,user_id:int,role:str,info:strawberry.types.Info) -> Message:
@@ -245,6 +243,26 @@ class Mutation:
         except User.DoesNotExist:
             return Message(success=False,message=_("roles.user_not_found"))
     
+    @strawberry.mutation()
+    def changeFirstName(self,nom:str,info:strawberry.types.Info)->Message:
+        try:
+            user = info.context.request.user
+            user.first_name = nom
+            user.save()
+            return Message(success=True,message=_("user.first_name_changed"))
+        except Exception:
+            return Message(success=False,message=_("user.first_name_change_failed"))
+    
+    @strawberry.mutation()
+    def changeLastName(self,nom:str,info:strawberry.types.Info)->Message:
+        try:
+            user = info.context.request.user
+            user.last_name = nom
+            user.save()
+            return Message(success=True,message=_("user.last_name_changed"))
+        except Exception:
+            return Message(success=False,message=_("user.last_name_change_failed"))
+        
     @strawberry.mutation()
     def add_session(self,name:str,start:Date,end:Date,info:strawberry.types.Info) ->SessionTyoe:
         user = info.context.request.user

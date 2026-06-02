@@ -97,7 +97,7 @@ def _handle_success(reference: str, transaction_id: str, amount):
         achat.save(update_fields=["status"])
         logger.info("[Djomy] Achat %s marqué SUCCESS", achat.id)
         type = TypeTimbre.objects.get(pk=achat.type_id)
-        assign = PriceAssignation.objects.get(type=type)
+        assign = PriceAssignation.objects.get(type=type,session__active=True)
         user = achat.user
         nb= Timbre.objects.all().count()+1
         reference_timb = f"TMB-00000{nb}"

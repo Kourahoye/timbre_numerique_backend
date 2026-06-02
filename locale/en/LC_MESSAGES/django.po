@@ -73,6 +73,15 @@ msgstr "Unknown stamp"
 msgid "user.unknown"
 msgstr "Unknown user"
 
+msgid "user.first_name_changed"
+msgstr "First name changed"
+
+msgid "user.last_name_changed"
+msgstr "Last name changed"
+
+msgid "user.last_name_change_failed"
+msgstr "Last name change failed"
+
 msgid "qrcode.wrong_format"
 msgstr "Invalid QR code format"
 

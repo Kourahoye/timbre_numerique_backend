@@ -112,3 +112,12 @@ msgstr "Toutes les notifications ont été marquées comme lues"
 
 msgid "notifications.read"
 msgstr "Notification marquée comme lue"
+
+msgid "user.first_name_changed"
+msgstr "Prénom changé"
+
+msgid "user.last_name_changed"
+msgstr "Nom changé"
+
+msgid "user.last_name_change_failed"
+msgstr "Changement du nom echoué"
