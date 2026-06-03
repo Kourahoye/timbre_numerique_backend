@@ -175,3 +175,8 @@ JWT_AUTH = {
 DJOMY_CLIENT_ID = os.getenv("DJOMY_CLIENT_ID")
 DJOMY_CLIENT_SECRET = os.getenv("DJOMY_CLIENT_SECRET")
 DJOMY_BASE_URL = os.getenv("DJOMY_BASE_URL")
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
