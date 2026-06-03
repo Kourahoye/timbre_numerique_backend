@@ -62,6 +62,7 @@ class Timbre(models.Model):
     used = models.BooleanField(default=False)
     qrCode = models.CharField(max_length=100)
     secret =  models.FloatField(null=False)
+    pdf_file = models.FileField(upload_to='timbres/', null=True, blank=True)
     price = models.ForeignKey(PriceAssignation,on_delete=models.CASCADE,related_name="assigned_price")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)

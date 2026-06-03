@@ -73,6 +73,7 @@ class TimbreType:
     type:TypeTimbreType
     used:bool
     qrCode:str
+    pdf_file:strawberry.auto
     owned_by:UserTypeMIN
     
 @strawberry_django.type(Notification)

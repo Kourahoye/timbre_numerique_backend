@@ -8,6 +8,7 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+from core.pdf_service import TimbrePDFGenerator
 from timbre.models import Notification, PriceAssignation, Timbre, TypeTimbre
 from timbre_numerique.settings import DJOMY_CLIENT_SECRET
 
@@ -103,7 +104,8 @@ def _handle_success(reference: str, transaction_id: str, amount):
         reference_timb = f"TMB-00000{nb}"
         secret = randint(500,nb*500)
         qrcode= f"{reference_timb}|{user}|{secret}"
-        Timbre.objects.create(reference=reference_timb,type=type,qrCode=qrcode,secret=secret,owned_by=user,price=assign)
+        timbre = Timbre.objects.create(reference=reference_timb,type=type,qrCode=qrcode,secret=secret,owned_by=user,price=assign)
+        pdf_url = TimbrePDFGenerator.generate(timbre)
         # print("==============================================================================================================================")
         Notification.objects.create(
             title="Achat réussi",
