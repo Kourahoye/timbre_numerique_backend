@@ -9,12 +9,14 @@ from django.db import transaction
 @receiver(post_save, sender=User)
 def assign_user_group(sender, instance, created, **kwargs):
     role = instance.role
+    # print("Assigning permissions for role:", role)
     if created:
         if instance.is_superuser:
             instance.role = "admin"
 
     if role not in ROLES:
         return
+    # print("Assigning permissions for role:==========================================")  
 
     def _assign():
         user = User.objects.get(pk=instance.pk)
@@ -26,6 +28,7 @@ def assign_user_group(sender, instance, created, **kwargs):
 
         user.groups.clear()
         user.groups.add(group)
+        # print("Permissions:",user.groups.first().permissions.all()) 
 
     # 🔑 exécuté après commit
     transaction.on_commit(_assign)

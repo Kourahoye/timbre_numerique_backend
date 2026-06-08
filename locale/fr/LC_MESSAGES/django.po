@@ -92,6 +92,21 @@ msgstr "Action inconnue"
 msgid "transaction.accepted"
 msgstr "Transaction acceptée"
 
+msgid "transaction.isAccepted"
+msgstr "est acceptée"
+
+msgid "transaction.isRejected"
+msgstr "est rejectée"
+
+msgid "transaction.to"
+msgstr "La transation vers"
+
+msgid "transaction.from"
+msgstr "La transation de la part de"
+
+msgid "transaction.pending"
+msgstr "Une transation est en attente"
+
 msgid "transaction.rejected"
 msgstr "Transaction rejetée"
 
@@ -121,3 +136,6 @@ msgstr "Nom changé"
 
 msgid "user.last_name_change_failed"
 msgstr "Changement du nom echoué"
+
+msgid "price.negative"
+msgstr "Le prix ne peut pas être negatif"

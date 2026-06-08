@@ -13,7 +13,7 @@ from timbre.models import Notification, PriceAssignation, Session, Timbre, Trans
 from timbre.services.djomy import create_payment
 from timbre.types import AuthPermType, DashboardStats, Message, NotificationType, PaymentResponse, PriceAssignationType, SessionTyoe, SessionTypeDetail, TimbreType, TransactionType, TransactionTypeDetails, TypeTimbreDetailsType, TypeTimbreType, UserTypeMIN
 from users.models import User
-from django.db.models import F
+from django.db.models import F, Q
 from django.db import connection
 from django.utils.translation import gettext as _
 from strawberry.types import Info
@@ -144,7 +144,9 @@ class Query(UserQueries):
     @strawberry.field(permission_classes=[IsAuthenticated])
     def my_transactions(self,info:strawberry.types.Info):
         user = info.context.request.user
-        transaction = Transaction.objects.filter(timbre__owned_by=user)
+        transaction = Transaction.objects.filter(
+            Q(timbre__owned_by=user) | Q(controller=user)
+        ).order_by("-created_at")
         return transaction
     
     @strawberry.field(permission_classes=[IsAuthenticated])
@@ -219,13 +221,16 @@ class Mutation:
     change_password = mutations.PasswordChange.field
     verify_account = mutations.VerifyAccount.field
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def assign_role(self,user_id:int,role:str,info:strawberry.types.Info) -> Message:
         try:
             if role not in ["admin","controller","user"]:
                 return Message(success=False,message=_("roles.invalid"))       
             user = User.objects.get(pk=user_id)
             me = User.objects.get(pk=info.context.request.user.id)
+            # print(me)
+            # print("---------------------------------------------------------------------")
+            # print(user)
             if me.role == user.role:
                 return Message(success=False,message=_("roles.same_role"))
             if me.role == "controller":
@@ -243,7 +248,7 @@ class Mutation:
         except User.DoesNotExist:
             return Message(success=False,message=_("roles.user_not_found"))
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def changeFirstName(self,nom:str,info:strawberry.types.Info)->Message:
         try:
             user = info.context.request.user
@@ -253,7 +258,7 @@ class Mutation:
         except Exception:
             return Message(success=False,message=_("user.first_name_change_failed"))
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def changeLastName(self,nom:str,info:strawberry.types.Info)->Message:
         try:
             user = info.context.request.user
@@ -263,7 +268,7 @@ class Mutation:
         except Exception:
             return Message(success=False,message=_("user.last_name_change_failed"))
         
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def add_session(self,name:str,start:Date,end:Date,info:strawberry.types.Info) ->SessionTyoe:
         user = info.context.request.user
         if start > end:
@@ -271,7 +276,7 @@ class Mutation:
         session =  Session.objects.create(name=name,start_date=start,end_date=end,created_by=user,updated_by=user)
         return session
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def change_session_name(self,id:int,name:str,info:strawberry.types.Info) ->SessionTyoe:
         user = info.context.request.user
         session =  Session.objects.get(pk=id)
@@ -280,7 +285,7 @@ class Mutation:
         session.save()
         return session
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def change_session_date(self,id:int,start:Date,end:Date,info:strawberry.types.Info) ->SessionTyoe:
         user = info.context.request.user
         session = Session.objects.get(pk=id)
@@ -290,7 +295,7 @@ class Mutation:
         session.save()
         return session
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def toogle_active_session(self,id:int,info:strawberry.types.Info) -> Message:
         try:
             user = info.context.request.user
@@ -310,7 +315,7 @@ class Mutation:
             return Message(success=False,message=_("session.not_found")) 
         
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def delete_session(self,id:int,info:strawberry.types.Info) -> Message:
         try:
             session = Session.objects.get(pk=id)
@@ -319,21 +324,28 @@ class Mutation:
         except Session.DoesNotExist:
             return Message(success=False,message=_("session.not_found")) 
     
-    @strawberry.mutation()
-    def add_timre_type(self,name:str,info:strawberry.types.Info) -> TypeTimbreType:
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    def add_timre_type(self,name:str,info:strawberry.types.Info,price:int=0) -> TypeTimbreType:
+        if price < 0:
+            raise ValidationError(message=_("price.negative"))
         user = info.context.request.user
         timbre_type = TypeTimbre.objects.create(name = name,created_by=user,updated_by=user)
+        if price > 0:
+            session = Session.objects.filter(active=True).first()
+            if session:
+               PriceAssignation.objects.create(type=timbre_type,session=session,price=price,created_by=user,updated_by=user)
         return timbre_type
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def change_timbre_type_name(self,id:int,name:str,info:strawberry.types.Info) -> TypeTimbreType:
         user = info.context.request.user
         timbre_type = TypeTimbre.objects.get(pk=id)
+        timbre_type.name = name
         timbre_type.updated_by=user
         timbre_type.save()
         return timbre_type
 
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def delete_type_timbre(self,id:int,info:strawberry.types.Info) -> Message:
         try:
             typeTimbre = TypeTimbre.objects.get(pk=id)
@@ -342,7 +354,7 @@ class Mutation:
         except TypeTimbre.DoesNotExist:
             return Message(success=False,message=_("timbre_type.not_found"))
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def assign_price(self,type_id:int,session_id:int,price:int,info:strawberry.types.Info) -> PriceAssignationType:
         type= TypeTimbre.objects.get(id=type_id)
         session = Session.objects.get(id=session_id)
@@ -350,7 +362,7 @@ class Mutation:
         price_assignation = PriceAssignation.objects.create(type=type,session=session,price=price,created_by=user,updated_by=user)
         return price_assignation
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def change_price(self,id:int,price:int,info:strawberry.types.Info) ->PriceAssignationType:
         user = info.context.request.user
         price_assignation = PriceAssignation.objects.get(pk=id)
@@ -359,7 +371,7 @@ class Mutation:
         price_assignation.save()
         return price_assignation
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def delete_price(self,id:int,info:strawberry.types.Info) ->Message:
         try:
             price_assignation = PriceAssignation.objects.get(pk=id)
@@ -368,7 +380,7 @@ class Mutation:
         except PriceAssignation.DoesNotExist:
             return Message(success=False,message=_("price.not_found"))
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def generate_timbre(self,type_id:int,info:strawberry.types.Info)-> TimbreType:
         type = TypeTimbre.objects.get(pk=type_id)
         assign = PriceAssignation.objects.get(type=type)
@@ -380,7 +392,7 @@ class Mutation:
         timbre = Timbre.objects.create(reference=reference,type=type,qrCode=qrcode,secret=secret,owned_by=user,price=assign)
         return timbre
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def desactivate(self,id:int,info:strawberry.types.Info) -> Message:
         try:
             timbre = Timbre.objects.get(pk=id) 
@@ -390,7 +402,7 @@ class Mutation:
         except Timbre.DoesNotExist:
             return Message(success=False,message=_("timbre.not_found"))
             
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def delete_timbre(self,id:int,info:strawberry.types.Info) -> Message:
         try:
             timbre = Timbre.objects.get(pk=id)
@@ -399,7 +411,7 @@ class Mutation:
         except Timbre.DoesNotExist:
             return Message(success=False,message=_("timbre.not_found"))
         
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def init_transaction(self,timbre:int,info:strawberry.types.Info) -> TransactionType:
         user = info.context.request.user
         _timbre = Timbre.objects.get(pk=timbre)
@@ -410,7 +422,7 @@ class Mutation:
         transaction = Transaction.objects.create(timbre_id=timbre,controller=user,updated_by=user)
         return transaction
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def transaction_observe(self,trasnctionId:int,info:strawberry.types.Info) -> TransactionType:
         user = info.context.request.user
         transation = Transaction.objects.get(id=trasnctionId)
@@ -418,15 +430,15 @@ class Mutation:
             raise ValidationError(message=_("transaction.cannot_observe"))
         return transation
                
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def end_transactions(self,transactionId:int,action:str,info:strawberry.types.Info)->Message:
         try:
             actions_allowed = ("accepted","rejected")
-            if not action in actions_allowed:
+            if action not in actions_allowed:
                 raise ValidationError(message=_("transaction.action_unknown"))
             user = info.context.request.user
             transaction = Transaction.objects.get(pk=transactionId)
-            timbre = Timbre.objects.get(id=transaction.timbre.id)
+            timbre = transaction.timbre
             other_transaction = Transaction.objects.filter(timbre=timbre).exclude(pk=transactionId)
             if (transaction.timbre.owned_by != user):
                 raise ValidationError(message=_("transaction.cannot_end_others")) 
@@ -434,8 +446,9 @@ class Mutation:
                 raise ValidationError(message=_("timbre.already_used"))       
             if transaction.status != "pending":
                 raise ValidationError(message=_("transaction.already_finished"))
-            if other_transaction:
+            if other_transaction.exists():
                 other_transaction.update(updated_by = user,status="rejected")   
+                # other_transaction.save()
             transaction.status = action
             transaction.updated_by = user
             transaction.save()
@@ -448,14 +461,14 @@ class Mutation:
            return Message(success=False,message=_("transaction.timbre_not_found"))
         
 
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def mark_all_as_read(self,info:strawberry.types.Info) -> Message:
         user = info.context.request.user
         notifs = Notification.objects.filter(user=user,read=False)
         notifs.update(read=True)
         return Message(success=True,message=_("notifications.all_read"))
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def mark_as_read(self,id:int,info:strawberry.types.Info) -> Message:
         user = info.context.request.user
         notif = Notification.objects.get(id=id)
@@ -463,7 +476,7 @@ class Mutation:
         notif.save()
         return Message(success=True,message=_("notifications.read"))
     
-    @strawberry.mutation()
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     def initiate_payment(
         self,
         phone: str,
@@ -485,6 +498,7 @@ class Mutation:
             type=TypeTimbre.objects.get(pk=type)
         )
         Notification.objects.create(
+            title="Paiement initié",
             user=user,
             content=f"Paiement en attente de confirmation:\n Montant:{amount}\nTelephone:{phone}\ntransactionId:{reference}\n{payment_url}",
         )

@@ -177,6 +177,9 @@ DJOMY_CLIENT_SECRET = os.getenv("DJOMY_CLIENT_SECRET")
 DJOMY_BASE_URL = os.getenv("DJOMY_BASE_URL")
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / 'media'
+# settings.py
+
+PROTECTED_MEDIA_ROOT = BASE_DIR / "protected_files"
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")

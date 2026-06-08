@@ -3,6 +3,7 @@ import hmac
 import json
 import logging
 from random import randint
+import uuid
 
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -100,8 +101,8 @@ def _handle_success(reference: str, transaction_id: str, amount):
         type = TypeTimbre.objects.get(pk=achat.type_id)
         assign = PriceAssignation.objects.get(type=type,session__active=True)
         user = achat.user
-        nb= Timbre.objects.all().count()+1
-        reference_timb = f"TMB-00000{nb}"
+        nb= Timbre.objects.all().count()+1           
+        reference_timb = f"TMB-{str(uuid.uuid4())}{nb}"
         secret = randint(500,nb*500)
         qrcode= f"{reference_timb}|{user}|{secret}"
         timbre = Timbre.objects.create(reference=reference_timb,type=type,qrCode=qrcode,secret=secret,owned_by=user,price=assign)
@@ -147,3 +148,22 @@ def _handle_pending(transaction_id: str):
         logger.error("[Djomy] Achat introuvable pour référence: %s", transaction_id)
     except Exception as e:
         logger.exception("[Djomy] Erreur _handle_pending: %s", e)
+
+
+from django.http import FileResponse, Http404
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def download_timbre(request, pk):
+
+    timbre = Timbre.objects.get(pk=pk)
+
+    # Vérification des droits
+    if timbre.proprietaire != request.user:
+        raise Http404()
+
+    return FileResponse(
+        timbre.pdf.open("rb"),
+        as_attachment=True,
+        filename="timbre.pdf"
+    )
