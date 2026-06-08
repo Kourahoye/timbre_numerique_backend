@@ -97,6 +97,20 @@ msgstr "Transaction accepted"
 msgid "transaction.rejected"
 msgstr "Transaction rejected"
 
+msgid "transaction.isAccepted"
+msgstr "is accepted"
+
+msgid "transaction.isRejected"
+msgstr "is rejected"
+
+msgid "transaction.to"
+msgstr "The transaction to"
+
+msgid "transaction.from"
+msgstr "The transaction from"
+
+msgid "transaction.pending"
+msgstr "A transaction is pending"
 
 msgid "transaction.cannot_end_others"
 msgstr "You cannot end another user's transaction"
@@ -115,3 +129,6 @@ msgstr "All notifications marked as read"
 
 msgid "notifications.read"
 msgstr "Notification marked as read"
+
+msgid "price.negative"
+msgstr "Price cannot be negative"

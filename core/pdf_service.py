@@ -136,8 +136,8 @@ class TimbrePDFGenerator:
         c.setFillColor(cls.GOLD)
         c.roundRect(badge_x, badge_y, badge_w, badge_h, 14, fill=1, stroke=0)
         c.setFillColor(cls.NAVY)
-        c.setFont("Helvetica-Bold", 13)
-        c.drawCentredString(W / 2, badge_y + 8, timbre.reference)
+        c.setFont("Helvetica-Bold", 8)
+        c.drawCentredString(W, badge_y + 8, timbre.reference)
 
         # ── Two-column layout ────────────────────────────────────────────────
         content_top = H - HEADER_H - 18
@@ -186,7 +186,10 @@ class TimbrePDFGenerator:
         row_y -= row_step
         info_row("Montant",          f"{timbre.price.price:,.0f} GNF",                     row_y,         accent=True)
         row_y -= row_step
-        info_row("Propriétaire",     f"{timbre.owned_by.first_name} {timbre.owned_by.last_name}", row_y)
+        if(timbre.owned_by.first_name or timbre.owned_by.last_name):
+            info_row("Propriétaire",     f"{timbre.owned_by.first_name} {timbre.owned_by.last_name}", row_y)
+        else:
+            info_row("Propriétaire",     f"{timbre.owned_by.username}", row_y)
         row_y -= row_step
         info_row("Nom d'utilisateur", timbre.owned_by.username,                            row_y,         accent=True)
         row_y -= row_step
@@ -213,7 +216,14 @@ class TimbrePDFGenerator:
         c.setFont("Helvetica-Bold", 9)
         c.drawCentredString(col2_x + col2_w / 2, card_y + card_h - 20, "QR CODE DE VÉRIFICATION")
 
-        qr_url = f"{getattr(settings, 'FRONTEND_URL', 'https://timbre.gov.gn')}/scan/{timbre.reference}"
+        qr_url = {
+            "proprietary": timbre.owned_by.username,
+            "type": timbre.type.name,
+            "montant": f"{timbre.price.price:,.0f} GNF",
+            "reference": timbre.reference,
+            "secret": timbre.secret,
+            "url": f"{settings.FRONTEND_URL}/scan/{timbre.reference}"
+        }
         qr_img = cls._qr_image(qr_url)
         qr_size = col2_w - 24
         qr_img_y = card_y + card_h - 48 - qr_size
@@ -225,15 +235,15 @@ class TimbrePDFGenerator:
         c.drawCentredString(col2_x + col2_w / 2, qr_img_y - 25, "l'authenticité du timbre")
 
         # Secret code box
-        # sb_y = qr_img_y - 80
-        # c.setFillColor(cls.NAVY)
-        # c.roundRect(col2_x + 8, sb_y, col2_w - 16, 55, 6, fill=1, stroke=0)
-        # c.setFillColor(cls.LIGHT_GOLD)
-        # c.setFont("Helvetica-Bold", 8)
-        # c.drawCentredString(col2_x + col2_w / 2, sb_y + 41, "CODE SECRET")
-        # c.setFillColor(cls.GOLD)
-        # c.setFont("Helvetica-Bold", 20)
-        # c.drawCentredString(col2_x + col2_w / 2, sb_y + 12, str(timbre.secret))
+        sb_y = qr_img_y - 80
+        c.setFillColor(cls.NAVY)
+        c.roundRect(col2_x + 8, sb_y, col2_w - 16, 55, 6, fill=1, stroke=0)
+        c.setFillColor(cls.LIGHT_GOLD)
+        c.setFont("Helvetica-Bold", 8)
+        c.drawCentredString(col2_x + col2_w / 2, sb_y + 41, "CODE SECRET")
+        c.setFillColor(cls.GOLD)
+        c.setFont("Helvetica-Bold", 20)
+        c.drawCentredString(col2_x + col2_w / 2, sb_y + 12, str(timbre.secret))
 
         # ── Session band ─────────────────────────────────────────────────────
         band_y = card_y - 78

@@ -79,6 +79,7 @@ class TimbreType:
 @strawberry_django.type(Notification)
 class NotificationType:
     id:strawberry.ID
+    title:str
     content:str
     user:UserTypeMIN
     read:bool
@@ -107,13 +108,13 @@ class TransactionTypeDetails:
     updated_by:UserTypeMIN
     
 
-@strawberry_django.type(Notification)
-class NotificationType:
-    id:strawberry.ID
-    content:str
-    read:bool
-    link:strawberry.auto
-    created_at:str
+# @strawberry_django.type(Notification)
+# class NotificationType:
+#     id:strawberry.ID
+#     content:str
+#     read:bool
+#     link:strawberry.auto
+#     created_at:str
     
 
 @strawberry.type
