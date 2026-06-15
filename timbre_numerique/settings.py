@@ -1,3 +1,4 @@
+from datetime import timedelta
 import os
 from pathlib import Path
 
@@ -166,6 +167,7 @@ GQL_AUTH = GqlAuthSettings(
     REGISTER_REQUIRE_CAPTCHA=False,
     SEND_ACTIVATION_EMAIL= False,
     ALLOW_LOGIN_NOT_VERIFIED= True,
+    JWT_EXPIRATION_DELTA = timedelta(minutes=30)
 )
 JWT_AUTH = {
     'JWT_ALGORITHM': 'HS256',# 7 jours

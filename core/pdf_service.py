@@ -136,9 +136,10 @@ class TimbrePDFGenerator:
         c.setFillColor(cls.GOLD)
         c.roundRect(badge_x, badge_y, badge_w, badge_h, 14, fill=1, stroke=0)
         c.setFillColor(cls.NAVY)
-        c.setFont("Helvetica-Bold", 8)
-        c.drawCentredString(W, badge_y + 8, timbre.reference)
-
+        # afficher la referenc e 3 par 3 caracteres en majuscules
+        c.setFont("Helvetica-Bold", 12)
+        c.drawCentredString(badge_x + badge_w / 2, badge_y, f"REF: {timbre.reference[:3].upper()} {timbre.reference[3:6].upper()} {timbre.reference[6:].upper()}")
+     
         # ── Two-column layout ────────────────────────────────────────────────
         content_top = H - HEADER_H - 18
         col_gap = 14
@@ -196,7 +197,9 @@ class TimbrePDFGenerator:
         info_row("Email",            timbre.owned_by.email,                                row_y)
         row_y -= row_step
         info_row("Date d'émission",  timbre.created_at.strftime("%d/%m/%Y à %H:%M"),       row_y,         accent=True)
-
+        row_y -= row_step
+        info_row("Code",  timbre.qrCode,       row_y,         accent=True)
+        
         # Status badge
         # sx, sy = col1_x + 14, card_y + 18
         # c.setFillColor(cls.RED if timbre.used else cls.GREEN)

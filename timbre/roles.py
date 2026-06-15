@@ -31,6 +31,7 @@ ROLES = {
         "download_pdf",
         "manage_users",
         "view_all_stamps",
+        "view_dashboard_minimal",
         "view_dashboard_global"
     ],
 }

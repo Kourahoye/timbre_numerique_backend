@@ -65,6 +65,9 @@ msgstr "Affectation introuvable"
 msgid "timbre.used"
 msgstr "Timbre utilisé"
 
+msgid "timbre.expired"
+msgstr "Le timbre a expiré"
+
 msgid "timbre.not_found"
 msgstr "Timbre introuvable"
 
