@@ -61,6 +61,9 @@ msgstr "Stamp used"
 msgid "timbre.not_found"
 msgstr "Stamp not found"
 
+msgid "timbre.expired"
+msgstr "Stamp expired"
+
 msgid "timbre.deleted"
 msgstr "Stamp deleted"
 

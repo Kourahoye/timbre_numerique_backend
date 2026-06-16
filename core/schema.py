@@ -1,3 +1,4 @@
+from datetime import timezone
 from random import randint
 from sqlite3 import Date
 from django.forms import ValidationError
@@ -87,9 +88,9 @@ class Query(UserQueries):
         # lang = translation.get_language()
         # print(f">>> Langue active: {lang}")  
         try:
-            ref,owner,secret = code.split("|")
-            usr = User.objects.get(username=owner)
-            timbre = Timbre.objects.get(reference=ref,owned_by=usr,secret=secret)
+            # ref,owner,secret = code.split("|")
+            # usr = User.objects.get(username=owner)
+            timbre = Timbre.objects.get(reference=code)
             return timbre
         except Timbre.DoesNotExist:
             raise ValidationError(message=_("timbre.unknown"))
@@ -159,34 +160,75 @@ class Query(UserQueries):
     @strawberry.field
     def dashboard_stats(self, info:strawberry.types.Info) -> DashboardStats:
         user = info.context.request.user
-
+        if user.role not in ["admin","controller"]:
+            raise ValidationError("403 Forbideen")
         with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT
-                    -- timbres
-                    COUNT(t.id)                                         AS total_timbres,
-                    COUNT(t.id) FILTER (WHERE t.used = TRUE)            AS used_timbres,
-                    COUNT(t.id) FILTER (WHERE t.used = FALSE)           AS unused_timbres,
-                    COALESCE(SUM(pa.price) FILTER (WHERE t.used=TRUE), 0) AS total_revenue,
+            if user.role == "admin":
+                cursor.execute("""
+                    SELECT
+                        -- timbres
+                        COUNT(t.id)                                         AS total_timbres,
+                        COUNT(t.id) FILTER (WHERE t.used = TRUE)            AS used_timbres,
+                        COUNT(t.id) FILTER (WHERE t.used = FALSE)           AS unused_timbres,
+                        COALESCE(SUM(pa.price) FILTER (WHERE t.used=TRUE), 0) AS total_revenue,
 
-                    -- transactions
-                    (SELECT COUNT(*) FROM timbre_transaction
-                    WHERE status = 'pending')                          AS pending_transactions,
-                    (SELECT COUNT(*) FROM timbre_transaction
-                    WHERE status = 'accepted')                         AS accepted_transactions,
-                    (SELECT COUNT(*) FROM timbre_transaction
-                    WHERE status = 'rejected')                         AS rejected_transactions,
+                        -- transactions
+                        (SELECT COUNT(*) FROM timbre_transaction
+                        WHERE status = 'pending')                          AS pending_transactions,
+                        (SELECT COUNT(*) FROM timbre_transaction
+                        WHERE status = 'accepted')                         AS accepted_transactions,
+                        (SELECT COUNT(*) FROM timbre_transaction
+                        WHERE status = 'rejected')                         AS rejected_transactions,
 
-                    -- notifications non lues
-                    (SELECT COUNT(*) FROM timbre_notification
-                    WHERE user_id = %s AND read = FALSE)               AS unread_notifications,
+                        -- notifications non lues
+                        (SELECT COUNT(*) FROM timbre_notification
+                        WHERE user_id = %s AND read = FALSE)               AS unread_notifications,
 
-                    -- total users
-                    (SELECT COUNT(*) FROM users_user)                   AS total_users
+                        -- total users
+                        (SELECT COUNT(*) FROM users_user)                   AS total_users
 
-                FROM timbre_timbre t
-                LEFT JOIN timbre_priceassignation pa ON pa.id = t.price_id
-            """, [user.pk])
+                    FROM timbre_timbre t
+                    LEFT JOIN timbre_priceassignation pa ON pa.id = t.price_id
+                """, [user.pk])
+            else:
+                cursor.execute("""
+                    SELECT
+                        -- timbres
+                        COUNT(t.id)                                                         AS total_timbres,
+                        COUNT(t.id) FILTER (WHERE t.used = TRUE)                            AS used_timbres,
+                        COUNT(t.id) FILTER (WHERE t.used = FALSE)                           AS unused_timbres,
+
+                        -- revenue filtré par controller (seulement les timbres validés par ce controller)
+                        COALESCE(
+                            SUM(pa.price) FILTER (
+                                WHERE t.used = TRUE
+                                AND EXISTS (
+                                    SELECT 1 FROM timbre_transaction tx
+                                    WHERE tx.controller_id = %s
+                                    AND tx.status = 'accepted'
+                                    AND tx.timbre_id = t.id
+                                )
+                            ), 0
+                        )                                                                   AS total_revenue,
+
+                        -- transactions liées à ce controller
+                        (SELECT COUNT(*) FROM timbre_transaction
+                        WHERE controller_id = %s AND status = 'pending')                   AS pending_transactions,
+                        (SELECT COUNT(*) FROM timbre_transaction
+                        WHERE controller_id = %s AND status = 'accepted')                  AS accepted_transactions,
+                        (SELECT COUNT(*) FROM timbre_transaction
+                        WHERE controller_id = %s AND status = 'rejected')                  AS rejected_transactions,
+
+                        -- notifications non lues
+                        (SELECT COUNT(*) FROM timbre_notification
+                        WHERE user_id = %s AND read = FALSE)                               AS unread_notifications,
+
+                        -- total users
+                        (SELECT COUNT(*) FROM users_user)                                   AS total_users
+
+                    FROM timbre_timbre t
+                    LEFT JOIN timbre_priceassignation pa ON pa.id = t.price_id
+                """, [user.pk, user.pk, user.pk, user.pk, user.pk])
 
             row = cursor.fetchone()
             (
@@ -415,10 +457,11 @@ class Mutation:
     def init_transaction(self,timbre:int,info:strawberry.types.Info) -> TransactionType:
         user = info.context.request.user
         _timbre = Timbre.objects.get(pk=timbre)
-        if _timbre.used:
-            raise ValidationError(message=_("timbre.already_used"))
-        # test_transction = Transaction.objects.get(timbre=timbre)
-        # if test_transction.status
+        # if _timbre.used:
+        #     raise ValidationError(message=_("timbre.already_used"))
+        # if  _timbre.price.end_date < timezone.now():
+        #     raise ValidationError(message=_("timbre.expired"))
+        
         transaction = Transaction.objects.create(timbre_id=timbre,controller=user,updated_by=user)
         return transaction
     
@@ -439,6 +482,9 @@ class Mutation:
             user = info.context.request.user
             transaction = Transaction.objects.get(pk=transactionId)
             timbre = transaction.timbre
+            # if timbre.price.end_date < timezone.now():
+            #     raise ValidationError(message=_("timbre.expired"))
+            
             other_transaction = Transaction.objects.filter(timbre=timbre).exclude(pk=transactionId)
             if (transaction.timbre.owned_by != user):
                 raise ValidationError(message=_("transaction.cannot_end_others")) 
@@ -500,7 +546,8 @@ class Mutation:
         Notification.objects.create(
             title="Paiement initié",
             user=user,
-            content=f"Paiement en attente de confirmation:\n Montant:{amount}\nTelephone:{phone}\ntransactionId:{reference}\n{payment_url}",
+            content=f"Paiement en attente de confirmation:\n Montant:{amount}\nTelephone:{phone}\ntransactionId:{reference}",
+            link={"link":payment_url}
         )
 
         return PaymentResponse(

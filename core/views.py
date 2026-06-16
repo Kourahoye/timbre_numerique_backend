@@ -7,7 +7,7 @@ import uuid
 
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from core.pdf_service import TimbrePDFGenerator
 from timbre.models import Notification, PriceAssignation, Timbre, TypeTimbre
@@ -101,11 +101,22 @@ def _handle_success(reference: str, transaction_id: str, amount):
         type = TypeTimbre.objects.get(pk=achat.type_id)
         assign = PriceAssignation.objects.get(type=type,session__active=True)
         user = achat.user
-        nb= Timbre.objects.all().count()+1           
-        reference_timb = f"TMB-{str(uuid.uuid4())}{nb}"
+        nb= Timbre.objects.all().count()+1          
+        #generate 15 digit unique reference 
+        ref = str(uuid.uuid4().int)[:15-len(str(nb))]
+        reference_timb = f"{ref}{nb}"
         secret = randint(500,nb*500)
         qrcode= f"{reference_timb}|{user}|{secret}"
-        timbre = Timbre.objects.create(reference=reference_timb,type=type,qrCode=qrcode,secret=secret,owned_by=user,price=assign)
+        try:
+            timbre = Timbre.objects.create(reference=reference_timb,type=type,qrCode=qrcode,secret=secret,owned_by=user,price=assign)
+        except Exception as e:
+            if "UNIQUE constraint failed: core_timbre.reference" in str(e):
+                reference_timb = f"{ref}{nb+1}"
+                qrcode= f"{reference_timb}|{user}|{secret}"
+                timbre = Timbre.objects.create(reference=reference_timb,type=type,qrCode=qrcode,secret=secret,owned_by=user,price=assign)
+            else:
+                logger.exception("[Djomy] Erreur lors de la création du timbre: %s", e)
+                raise e
         pdf_url = TimbrePDFGenerator.generate(timbre)
         # print("==============================================================================================================================")
         Notification.objects.create(
@@ -153,7 +164,8 @@ def _handle_pending(transaction_id: str):
 from django.http import FileResponse, Http404
 from django.contrib.auth.decorators import login_required
 
-@login_required
+@csrf_exempt
+@require_GET
 def download_timbre(request, pk):
 
     timbre = Timbre.objects.get(pk=pk)
