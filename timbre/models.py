@@ -65,7 +65,7 @@ class Timbre(models.Model):
     pdf_file = models.FileField(upload_to='protected_files/timbres/', null=True, blank=True)
     price = models.ForeignKey(PriceAssignation,on_delete=models.CASCADE,related_name="assigned_price")
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     owned_by = models.ForeignKey(User,on_delete=models.CASCADE,related_name="timbre_owned_by")
     
     class Meta:

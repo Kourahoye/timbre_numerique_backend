@@ -546,7 +546,8 @@ class Mutation:
         Notification.objects.create(
             title="Paiement initié",
             user=user,
-            content=f"Paiement en attente de confirmation:\n Montant:{amount}\nTelephone:{phone}\ntransactionId:{reference}\n{payment_url}",
+            content=f"Paiement en attente de confirmation:\n Montant:{amount}\nTelephone:{phone}\ntransactionId:{reference}",
+            link={"link":payment_url}
         )
 
         return PaymentResponse(
